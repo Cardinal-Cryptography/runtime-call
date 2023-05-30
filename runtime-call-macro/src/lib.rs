@@ -7,7 +7,7 @@ use proc_macro2::{Ident, Span};
 use proc_macro_error::proc_macro_error;
 use quote::quote;
 use subxt_metadata::Metadata;
-use syn::parse_macro_input;
+use syn::{parse_macro_input, Path};
 
 #[derive(Debug, FromMeta)]
 struct MacroArgs {
@@ -37,22 +37,56 @@ pub fn runtime_call(args: TokenStream, input: TokenStream) -> TokenStream {
     file.read_to_end(&mut bytes).unwrap();
     let metadata = Metadata::decode(&mut &bytes[..]).unwrap();
 
+    let types_registry = &metadata.types();
+
+    let mut pallets = metadata.pallets().collect::<Vec<_>>();
+    pallets.sort_by_key(|p| p.index());
+
     let mut main_enum_variants = vec![];
     let mut pallet_calls = vec![];
 
-    for pallet in metadata.pallets() {
-        let name = Ident::new(pallet.name(), Span::call_site());
-        let index = pallet.index();
-        let call_enum = Ident::new(&format!("{}Call", pallet.name()), Span::call_site());
+    for pallet in pallets {
+        let pallet_name = Ident::new(pallet.name(), Span::call_site());
+        let pallet_index = pallet.index();
+        let pallet_call_name = Ident::new(&format!("{}Call", pallet.name()), Span::call_site());
 
         main_enum_variants.push(quote! {
-            #[codec(index = #index)]
-            #name ( #call_enum )
+            #[codec(index = #pallet_index)]
+            #pallet_name ( #pallet_call_name )
         });
+
+        let mut call_variants = vec![];
+
+        for call_variant in pallet.call_variants().unwrap_or_default() {
+            let call_index = call_variant.index;
+            let call_name = Ident::new(&call_variant.name, Span::call_site());
+
+            let mut fields = vec![];
+            for field in &call_variant.fields {
+                let field_name = Ident::new(field.name.as_ref().unwrap(), Span::call_site());
+
+                let field_type = types_registry.resolve(field.ty.id).unwrap();
+                let field_type = match field_type.path.ident() {
+                    Some(ident) => Path::from(Ident::new(&ident, Span::call_site())),
+                    None => Path::from(Ident::new("u8", Span::call_site())),
+                };
+
+                fields.push(quote! {#field_name: #field_type});
+            }
+
+            call_variants.push(quote! {
+                #[codec(index = #call_index)]
+                #call_name {
+                    #(#fields),*
+                }
+            });
+        }
 
         pallet_calls.push(quote! {
             #[derive(parity_scale_codec::Encode, parity_scale_codec::Decode)]
-            pub struct #call_enum;
+            pub enum #pallet_call_name {
+                #(#call_variants),*
+            }
         });
     }
 

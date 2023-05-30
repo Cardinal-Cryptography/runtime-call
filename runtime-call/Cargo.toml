@@ -1,9 +1,9 @@
 [package]
-name = "runtime-types"
+name = "runtime-call"
 version.workspace = true
 edition.workspace = true
 repository.workspace = true
 
 [dependencies]
 parity-scale-codec = { workspace = true }
-runtime-types-macro = { workspace = true }
+runtime-call-macro = { workspace = true }

@@ -1,5 +1,5 @@
 [package]
-name = "runtime-types-macro"
+name = "runtime-call-macro"
 version.workspace = true
 edition.workspace = true
 repository.workspace = true

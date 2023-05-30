@@ -1,6 +1,9 @@
 [package]
 name = "runtime-types"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
 
 [dependencies]
+parity-scale-codec = { workspace = true }
+runtime-types-macro = { workspace = true }

@@ -4,3 +4,22 @@ members = [
     "runtime-types",
     "runtime-types-macro",
 ]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+repository = "https://github.com/Cardinal-Cryptography/runtime-types"
+
+[workspace.dependencies]
+darling = { version = "0.20.0" }
+parity-scale-codec = { version = "3.4.0", default-features = false }
+proc-macro-error = { version = "1.0.4" }
+proc-macro2 = { version = "1.0.55" }
+quote = { version = "1.0.8" }
+scale-info = { version = "2.6.0" }
+syn = { version = "2.0.15" }
+
+subxt-metadata = { git = "https://github.com/paritytech/subxt" }
+
+runtime-types = { path = "runtime-types" }
+runtime-types-macro = { path = "runtime-types-macro" }
